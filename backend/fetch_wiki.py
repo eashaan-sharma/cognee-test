@@ -28,9 +28,13 @@ CATEGORIES = [
     "Middle-earth objects",
 ]
 
-# Sections that are lists of sources, not content. Everything from the first one onward is dropped.
+# Headings that start source lists. Everything from the first one onward is dropped.
 CUT_SECTIONS = ("References", "Notes", "Sources", "Citations", "Further reading",
                 "External links", "See also", "Bibliography")
+
+# Words that mark real-world sections (films, actors, reception), e.g. "Portrayal in adaptations".
+# A heading containing any of these also ends the article text.
+REAL_WORLD_WORDS = ("Adaptation", "adaptation", "popular culture", "Portrayal", "Reception", "Legacy")
 
 
 def api_get(params):
@@ -71,8 +75,10 @@ def article_text(title):
     page = data["query"]["pages"][0]
     text = page.get("extract", "")
 
-    # Plain-text headings look like "== References ==". Stop at the first source-list heading.
-    pattern = r"\n=+\s*(" + "|".join(CUT_SECTIONS) + r")\s*=+"
+    # Plain-text headings look like "== References ==" or "=== Portrayal in adaptations ===".
+    exact = r"\n=+\s*(" + "|".join(CUT_SECTIONS) + r")\s*=+"
+    contains = r"\n=+[^=\n]*(" + "|".join(REAL_WORLD_WORDS) + r")[^=\n]*=+"
+    pattern = exact + "|" + contains
     match = re.search(pattern, text)
     if match:
         text = text[: match.start()]
@@ -88,6 +94,7 @@ def is_in_universe(title):
         return False
     return True
 
+
 def resolve_and_rank(titles):
     """Follow redirects, drop duplicates and list pages, and sort by article size (biggest first).
 
@@ -102,7 +109,7 @@ def resolve_and_rank(titles):
             if page.get("missing") or page["ns"] != 0:
                 continue
             pages[page["title"]] = page["length"]  # same target twice -> stored once
-        real = {t: n for t, n in pages.items() if is_in_universe(t)}
+    real = {t: n for t, n in pages.items() if is_in_universe(t)}
     return sorted(real, key=real.get, reverse=True)
 
 
