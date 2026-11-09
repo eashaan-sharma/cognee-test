@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+
+# Secrets
+.env
+
+# Downloaded articles and Cognee's databases (rebuilt by the scripts)
+data/*
+!data/raw/
+data/raw/*
+!data/raw/.gitkeep
+
+# Frontend
+node_modules/
+frontend/dist/
